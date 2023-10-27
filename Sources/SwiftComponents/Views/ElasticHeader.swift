@@ -39,37 +39,37 @@ public struct ElasticScrollView<Content: View>: View {
     }
     
     public var body: some View {
-        GeometryReader { outerGeometry in
-            ScrollView(showsIndicators: showsIndicators) {
-                ZStack(alignment: .top) {
-                    GeometryReader { innerGeometry in
-                        Color.clear.preference(key: ViewOffsetKey.self, value: innerGeometry.frame(in: CoordinateSpace.named("scroll")).minY)
-                    }
-                    .frame(height: 0)
-                    
-                    content
-                }
-            }
-            .coordinateSpace(name: "scroll")
-        }
-        .onPreferenceChange(ViewOffsetKey.self) { offset in
-            self.offset = max(0, offset)
-        }
-        .environment(\.scrollViewOffset, offset)
-//        ScrollView {
-//            VStack(spacing: 0) {
-//                GeometryReader { geometry in
-//                    Color.clear.preference(key: ViewOffsetKey.self, value: geometry.frame(in: .global).minY)
+//        GeometryReader { outerGeometry in
+//            ScrollView(showsIndicators: showsIndicators) {
+//                ZStack(alignment: .top) {
+//                    GeometryReader { innerGeometry in
+//                        Color.clear.preference(key: ViewOffsetKey.self, value: innerGeometry.frame(in: CoordinateSpace.named("scroll")).minY)
+//                    }
+//                    .frame(height: 0)
+//                    
+//                    content
 //                }
-//                .frame(height: 0)
-//                content
 //            }
+//            .coordinateSpace(name: "scroll")
 //        }
-//        .overlay(
-//            Color.clear
-//                .contentShape(Rectangle())
-//                .coordinateSpace(name: "TopOffsetBoundingBoxView")
-//        )
+//        .onPreferenceChange(ViewOffsetKey.self) { offset in
+//            self.offset = max(0, offset)
+//        }
+//        .environment(\.scrollViewOffset, offset)
+        ScrollView {
+            VStack(spacing: 0) {
+                GeometryReader { geometry in
+                    Color.clear.preference(key: ViewOffsetKey.self, value: geometry.frame(in: .global).minY)
+                }
+                .frame(height: 0)
+                content
+            }
+        }
+        .overlay(
+            Color.clear
+                .contentShape(Rectangle())
+                .coordinateSpace(name: "TopOffsetBoundingBoxView")
+        )
     }
 }
 
@@ -128,14 +128,16 @@ private struct ElasticTopPinModifier: ViewModifier {
 private struct ElasticScaleModifier: ViewModifier {
     
     @State var size: CGSize = .zero
+    @State var offset: CGFloat = .zero
     
-    @Environment(\.scrollViewOffset) private var offset
+//    @Environment(\.scrollViewOffset) private var offset
     
     func body(content: Content) -> some View {
         ZStack(alignment: .top) {
             content
                 .opacity(0)
                 .withSizeBinding($size)
+                .withElasticOffsetBinding($offset)
             if size == .zero {
                 content
             } else {
