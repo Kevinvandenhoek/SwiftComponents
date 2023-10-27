@@ -29,31 +29,33 @@ private struct ViewOffsetKey: PreferenceKey {
 
 public struct ElasticScrollView<Content: View>: View {
     let content: Content
+    let showsIndicators: Bool
     
     @State private var offset: CGFloat = 0
     
-    public init(@ViewBuilder content: () -> Content) {
+    public init(showsIndicators: Bool = true, @ViewBuilder content: () -> Content) {
+        self.showsIndicators = showsIndicators
         self.content = content()
     }
     
     public var body: some View {
         GeometryReader { outerGeometry in
-                    ScrollView {
-                        ZStack(alignment: .top) {
-                            GeometryReader { innerGeometry in
-                                Color.clear.preference(key: ViewOffsetKey.self, value: innerGeometry.frame(in: CoordinateSpace.named("scroll")).minY)
-                            }
-                            .frame(height: 0)
-                            
-                            content
-                        }
+            ScrollView(showsIndicators: showsIndicators) {
+                ZStack(alignment: .top) {
+                    GeometryReader { innerGeometry in
+                        Color.clear.preference(key: ViewOffsetKey.self, value: innerGeometry.frame(in: CoordinateSpace.named("scroll")).minY)
                     }
-                    .coordinateSpace(name: "scroll")
+                    .frame(height: 0)
+                    
+                    content
                 }
-                .onPreferenceChange(ViewOffsetKey.self) { offset in
-                    self.offset = max(0, offset)
-                }
-                .environment(\.scrollViewOffset, offset)
+            }
+            .coordinateSpace(name: "scroll")
+        }
+        .onPreferenceChange(ViewOffsetKey.self) { offset in
+            self.offset = max(0, offset)
+        }
+        .environment(\.scrollViewOffset, offset)
 //        ScrollView {
 //            VStack(spacing: 0) {
 //                GeometryReader { geometry in
