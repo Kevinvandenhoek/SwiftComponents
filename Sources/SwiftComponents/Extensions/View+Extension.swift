@@ -23,9 +23,12 @@ public extension View {
     /// Add's an opacity animation to the redacted effect. 'if condition' must be true for the view to become redacted.
     @ViewBuilder
     func shimmering(if condition: Bool) -> some View {
-        self
-            .redacted(if: condition)
-            .modifier(OpacityAnimationModifier())
+        if condition {
+            self.redacted(if: condition)
+                .modifier(OpacityAnimationModifier())
+        } else {
+            self
+        }
     }
     
     /// Updates an external binding with the view's size
