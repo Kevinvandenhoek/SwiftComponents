@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'SwiftComponents'
-  s.version          = '0.0.1'
+  s.version          = '1.0.0'
   s.summary          = 'A SwiftUI Components library.'
   s.homepage         = 'https://github.com/Kevinvandenhoek/SwiftComponents.git'
   s.license          = { :type => 'MIT', :file => 'LICENSE.md' }
