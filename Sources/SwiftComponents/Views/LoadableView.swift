@@ -14,10 +14,10 @@ public struct LoadableView<Content: View, Failure: View, Item>: View {
     public let content: (Item) -> Content
     public let failure: (Error) -> Failure
     
-    public init(_ loadable: Loadable<Item>, @ViewBuilder content: @escaping (Item) -> Content, @ViewBuilder failure: @escaping (Error) -> Failure) {
+    public init(_ loadable: Loadable<Item>, @ViewBuilder failure: @escaping (Error) -> Failure, @ViewBuilder content: @escaping (Item) -> Content) {
         self.loadable = loadable
-        self.content = content
         self.failure = failure
+        self.content = content
     }
     
     public var body: some View {
