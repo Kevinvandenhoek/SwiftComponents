@@ -30,3 +30,14 @@ public struct LoadableView<Content: View, Failure: View, Item>: View {
         }
     }
 }
+
+public extension LoadableView where Failure == EmptyView {
+    
+    static func emptyOnError(_ loadable: Loadable<Item>, @ViewBuilder content: @escaping (Item) -> Content) -> Self {
+        self.init(
+            loadable,
+            failure: { _ in EmptyView() },
+            content: content
+        )
+    }
+}
