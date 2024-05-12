@@ -66,10 +66,18 @@ public extension ObservableObject {
     func load<Value>(
         into keyPath: KeyPath<Self, CurrentValueSubject<Loadable<Value>, Never>>,
         ignoreIfLoaded: Bool = false,
+        file: String = #file,
+        line: Int = #line,
         loader: @escaping () async throws -> Value
     ) {
         Task {
-            try? await loadAsync(into: keyPath, ignoreIfLoaded: ignoreIfLoaded, loader: loader)
+            try? await loadAsync(
+                into: keyPath,
+                ignoreIfLoaded: ignoreIfLoaded,
+                file: file,
+                line: line,
+                loader: loader
+            )
         }
     }
     
@@ -82,24 +90,20 @@ public extension ObservableObject {
     func loadAsync<Value>(
         into keyPath: KeyPath<Self, CurrentValueSubject<Loadable<Value>, Never>>,
         ignoreIfLoaded: Bool = false,
+        file: String = #file,
+        line: Int = #line,
         loader: () async throws -> Value
     ) async throws -> Value {
         if ignoreIfLoaded, case .loaded(let value) = self[keyPath: keyPath].value.state {
             return value
         }
-        await MainActor.run {
-            self[keyPath: keyPath].value.state = .loading
-        }
+        self[keyPath: keyPath].value.state = .loading
         do {
             let value = try await loader()
-            await MainActor.run {
-                self[keyPath: keyPath].value.state = .loaded(value)
-            }
+            self[keyPath: keyPath].value.state = .loaded(value)
             return value
         } catch {
-            await MainActor.run {
-                self[keyPath: keyPath].value.state = .error(error)
-            }
+            self[keyPath: keyPath].value.state = .error(error)
             throw error
         }
     }
