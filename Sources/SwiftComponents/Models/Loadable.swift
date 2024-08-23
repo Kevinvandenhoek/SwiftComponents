@@ -31,8 +31,15 @@ public struct Loadable<Value>: LoadableProtocol {
             }
         }
     }
-    public var placeholder: Value
+    public var placeholder: Value {
+        didSet {
+            guard let value = value as? Encodable, let key = storage.key else { return }
+            UserDefaults.standard.set(key: key, to: value)
+        }
+    }
     public var valueOrPlaceholder: Value { value ?? placeholder }
+    
+    private let storage: PlaceholderStorage
     
     public var value: Value? {
         switch state {
@@ -68,17 +75,22 @@ public struct Loadable<Value>: LoadableProtocol {
     }
     
     // MARK: Lifecycle
-    public static func placeholder(_ placeholder: Value) -> Self {
-        return .init(.initial, placeholder: placeholder)
+    public static func placeholder(_ placeholder: Value, storage: PlaceholderStorage = .default) -> Self {
+        return .init(.initial, placeholder: placeholder, storage: storage)
     }
     
-    public static func loaded(_ value: Value) -> Self {
-        return .init(.loaded(value), placeholder: value)
+    public static func loaded(_ value: Value, storage: PlaceholderStorage = .default) -> Self {
+        return .init(.loaded(value), placeholder: value, storage: storage)
     }
     
-    public init(_ state: LoadingState<Value> = .initial, placeholder: Value) {
-        self.placeholder = placeholder
+    public init(_ state: LoadingState<Value> = .initial, placeholder: Value, storage: PlaceholderStorage = .default) {
         self.state = state
+        self.storage = storage
+        if let key = storage.key, let existing: Value = UserDefaults.standard.get(key: key) {
+            self.placeholder = existing
+        } else {
+            self.placeholder = placeholder
+        }
     }
 }
 
@@ -87,6 +99,29 @@ public enum LoadingState<Value> {
     case loading
     case error(Error)
     case loaded(Value)
+}
+
+extension Loadable {
+    
+    public enum PlaceholderStorage {
+        /// Whenever a value is loaded, a persistent placeholder of the same value will be written to storage if possible
+        case `default`
+        /// Whenever a value is loaded, a persistent placeholder of the same value will be written to storage if possible, but with a custom key
+        case key(String)
+        /// No persistent placeholder storage
+        case none
+        
+        var key: String? {
+            switch self {
+            case .default:
+                return "SwiftComponents.Loadable.\(String(describing: type(of: Value.self)))"
+            case .key(let string):
+                return string
+            case .none:
+                return nil
+            }
+        }
+    }
 }
 
 public extension Loadable {

@@ -109,3 +109,72 @@ private struct WithElasticOffsetBinding: ViewModifier {
     }
 }
 
+public extension View {
+    
+    @ViewBuilder
+    func enableEntryAnimation(animation: Animation = .spring(duration: 0.5, bounce: 0.1)) -> some View {
+        EntryAnimationView(animation: animation) {
+            self
+        }
+    }
+    
+    func withEntryAnimation() -> some View {
+        self.modifier(EntryAnimation())
+    }
+    
+    @ViewBuilder
+    func entryAnimationTransform(if condition: Bool) -> some View {
+        self.scaleEffect(condition ? CGFloat.random(in: 1.3...1.6) : 1)
+            .rotationEffect(.degrees(condition ? CGFloat.random(in: -10...10) : 0))
+            .offset(
+                x: condition ? CGFloat.random(in: -50...50) : 0,
+                y: condition ? CGFloat.random(in: -50...50) : 0
+            )
+            .opacity(condition ? 0 : 1)
+    }
+}
+
+private struct DidEntryAnimationKey: EnvironmentKey {
+    static let defaultValue: Bool = true
+}
+
+public extension EnvironmentValues {
+    var didEntryAnimation: Bool {
+        get { self[DidEntryAnimationKey.self] }
+        set { self[DidEntryAnimationKey.self] = newValue }
+    }
+}
+
+public struct EntryAnimationView<Content: View>: View {
+    let content: Content
+    let animation: Animation
+    
+    @State private var didEntryAnimation: Bool = UIAccessibility.isReduceMotionEnabled
+    
+    public init(animation: Animation, @ViewBuilder content: () -> Content) {
+        self.animation = animation
+        self.content = content()
+    }
+    
+    public var body: some View {
+        content
+            .environment(\.didEntryAnimation, didEntryAnimation)
+            .onAppear {
+                guard !UIAccessibility.isReduceMotionEnabled else { return }
+                withAnimation(animation) {
+                    didEntryAnimation = true
+                }
+            }
+    }
+}
+
+private struct EntryAnimation: ViewModifier {
+    
+    @SwiftUI.Environment(\.didEntryAnimation)
+    var didEntryAnimation
+
+    func body(content: Content) -> some View {
+        content
+            .entryAnimationTransform(if: !didEntryAnimation)
+    }
+}
