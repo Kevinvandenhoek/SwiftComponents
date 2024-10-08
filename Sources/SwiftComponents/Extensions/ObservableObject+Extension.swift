@@ -66,7 +66,7 @@ public extension ObservableObject {
     func load<Value>(
         into keyPath: KeyPath<Self, CurrentValueSubject<Loadable<Value>, Never>>,
         ignoreIfLoaded: Bool = false,
-        scheduler: (some Scheduler)? = nil,
+        scheduler: some Scheduler,
         file: String = #file,
         line: Int = #line,
         loader: @escaping () async throws -> Value
@@ -92,7 +92,7 @@ public extension ObservableObject {
     func loadAsync<Value>(
         into keyPath: KeyPath<Self, CurrentValueSubject<Loadable<Value>, Never>>,
         ignoreIfLoaded: Bool = false,
-        scheduler: (some Scheduler)? = nil,
+        scheduler: some Scheduler,
         file: String = #file,
         line: Int = #line,
         loader: () async throws -> Value
@@ -100,31 +100,70 @@ public extension ObservableObject {
         if ignoreIfLoaded, case .loaded(let value) = self[keyPath: keyPath].value.state {
             return value
         }
-        if let scheduler {
-            scheduler.schedule {
-                self[keyPath: keyPath].value.state = .loading
-            }
-        } else {
+        scheduler.schedule {
             self[keyPath: keyPath].value.state = .loading
         }
         do {
             let value = try await loader()
-            if let scheduler {
-                scheduler.schedule {
-                    self[keyPath: keyPath].value.state = .loaded(value)
-                }
-            } else {
+            scheduler.schedule {
                 self[keyPath: keyPath].value.state = .loaded(value)
             }
             return value
         } catch {
-            if let scheduler {
-                scheduler.schedule {
-                    self[keyPath: keyPath].value.state = .error(error)
-                }
-            } else {
+            scheduler.schedule {
                 self[keyPath: keyPath].value.state = .error(error)
             }
+            throw error
+        }
+    }
+    
+    /// Load data and update the property specified by a key path.
+    ///
+    /// - Parameters:
+    ///   - keyPath: The key path of the property to be updated with the loading result.
+    ///   - reload: A boolean flag to indicate if the loading should be performed even if the property is already loaded. Default is `false`.
+    ///   - loader: An asynchronous closure that fetches the data and returns the value or throws an error.
+    func load<Value>(
+        into keyPath: KeyPath<Self, CurrentValueSubject<Loadable<Value>, Never>>,
+        ignoreIfLoaded: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        loader: @escaping () async throws -> Value
+    ) {
+        Task {
+            try? await loadAsync(
+                into: keyPath,
+                ignoreIfLoaded: ignoreIfLoaded,
+                file: file,
+                line: line,
+                loader: loader
+            )
+        }
+    }
+    
+    /// Load data and update the property specified by a key path.
+    ///
+    /// - Parameters:
+    ///   - keyPath: The key path of the property to be updated with the loading result.
+    ///   - reload: A boolean flag to indicate if the loading should be performed even if the property is already loaded. Default is `false`.
+    ///   - loader: An asynchronous closure that fetches the data and returns the value or throws an error.
+    func loadAsync<Value>(
+        into keyPath: KeyPath<Self, CurrentValueSubject<Loadable<Value>, Never>>,
+        ignoreIfLoaded: Bool = false,
+        file: String = #file,
+        line: Int = #line,
+        loader: () async throws -> Value
+    ) async throws -> Value {
+        if ignoreIfLoaded, case .loaded(let value) = self[keyPath: keyPath].value.state {
+            return value
+        }
+        self[keyPath: keyPath].value.state = .loading
+        do {
+            let value = try await loader()
+            self[keyPath: keyPath].value.state = .loaded(value)
+            return value
+        } catch {
+            self[keyPath: keyPath].value.state = .error(error)
             throw error
         }
     }
