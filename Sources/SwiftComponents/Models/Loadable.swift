@@ -102,7 +102,7 @@ public enum LoadingState<Value> {
     case loaded(Value)
 }
 
-extension LoadingState: Equatable where Value == any Equatable {
+extension LoadingState: Equatable {
     
     public static func == (lhs: LoadingState<Value>, rhs: LoadingState<Value>) -> Bool {
         switch lhs {
@@ -128,7 +128,12 @@ extension LoadingState: Equatable where Value == any Equatable {
             }
         case .loaded(let lhsValue):
             if case .loaded(let rhsValue) = rhs {
-                return AnyEquatable(lhsValue) == AnyEquatable(rhsValue)
+                if let lhsValueEquatable = lhsValue as? any Equatable,
+                   let rhsValueEquatable = rhsValue as? any Equatable {
+                    return AnyEquatable(lhsValueEquatable) == AnyEquatable(rhsValueEquatable)
+                } else {
+                    return String(describing: lhsValue) == String(describing: rhsValue)
+                }
             } else {
                 return false
             }
