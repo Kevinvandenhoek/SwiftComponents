@@ -120,7 +120,9 @@ extension LoadingState: Equatable where Value == any Equatable {
             }
         case .error(let lhsError):
             if case .error(let rhsError) = rhs {
-                return String(describing: lhsError) == String(describing: rhsError)
+                let lhsErrorEquatable = lhsError as any Equatable
+                let rhsErrorEquatable = rhsError as any Equatable
+                return AnyEquatable(lhsErrorEquatable) == AnyEquatable(rhsErrorEquatable)
             } else {
                 return false
             }
@@ -136,7 +138,7 @@ extension LoadingState: Equatable where Value == any Equatable {
     private struct AnyEquatable: Equatable {
         private let value: any Equatable
         private let equals: (any Equatable) -> Bool
-
+        
         init<T: Equatable>(_ value: T) {
             self.value = value
             self.equals = { ($0 as? T) == value }
