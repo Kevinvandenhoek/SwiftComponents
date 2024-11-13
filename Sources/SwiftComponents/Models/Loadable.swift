@@ -95,10 +95,57 @@ public struct Loadable<Value>: LoadableProtocol {
 }
 
 public enum LoadingState<Value> {
+    
     case initial
     case loading
     case error(Error)
     case loaded(Value)
+}
+
+extension LoadingState: Equatable where Value == any Equatable {
+    
+    public static func == (lhs: LoadingState<Value>, rhs: LoadingState<Value>) -> Bool {
+        switch lhs {
+        case .initial:
+            if case .initial = rhs {
+                return true
+            } else {
+                return false
+            }
+        case .loading:
+            if case .loading = rhs {
+                return true
+            } else {
+                return false
+            }
+        case .error(let lhsError):
+            if case .error(let rhsError) = rhs {
+                return String(describing: lhsError) == String(describing: rhsError)
+            } else {
+                return false
+            }
+        case .loaded(let lhsValue):
+            if case .loaded(let rhsValue) = rhs {
+                return AnyEquatable(lhsValue) == AnyEquatable(rhsValue)
+            } else {
+                return false
+            }
+        }
+    }
+    
+    private struct AnyEquatable: Equatable {
+        private let value: any Equatable
+        private let equals: (any Equatable) -> Bool
+
+        init<T: Equatable>(_ value: T) {
+            self.value = value
+            self.equals = { ($0 as? T) == value }
+        }
+
+        static func == (lhs: AnyEquatable, rhs: AnyEquatable) -> Bool {
+            return lhs.equals(rhs.value)
+        }
+    }
 }
 
 extension Loadable {
