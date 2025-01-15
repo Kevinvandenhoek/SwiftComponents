@@ -11,7 +11,7 @@ public protocol LoadableProtocol {
     
     associatedtype Value
     
-    var value: Value? { get }
+    var value: Value? { get set }
     var placeholder: Value { get set }
     var error: Error? { get }
     var isLoading: Bool { get }
@@ -42,11 +42,20 @@ public struct Loadable<Value>: LoadableProtocol {
     private let storage: PlaceholderStorage
     
     public var value: Value? {
-        switch state {
-        case .loaded(let value):
-            return value
-        default:
-            return nil
+        get {
+            switch state {
+            case .loaded(let value):
+                return value
+            default:
+                return nil
+            }
+        }
+        set {
+            if let newValue {
+                state = .loaded(newValue)
+            } else {
+                state = .initial
+            }
         }
     }
     public var error: Error? {
