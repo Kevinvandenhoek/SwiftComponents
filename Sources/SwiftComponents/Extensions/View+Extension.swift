@@ -32,8 +32,8 @@ public extension View {
     }
     
     /// Updates an external binding with the view's size
-    func withSizeBinding(_ size: Binding<CGSize>) -> some View {
-        self.modifier(WithSizeBinding(size: size))
+    func withSizeBinding(_ size: Binding<CGSize>, precision: CGFloat? = nil) -> some View {
+        self.modifier(WithSizeBinding(size: size, precision: precision))
     }
     
     func withElasticOffsetBinding(_ offset: Binding<CGFloat>, padding: CGFloat = 0) -> some View {
@@ -69,6 +69,7 @@ private struct SizePreferenceKey: PreferenceKey {
 
 private struct WithSizeBinding: ViewModifier {
     @Binding var size: CGSize
+    let precision: CGFloat?
     
     func body(content: Content) -> some View {
         content
@@ -76,7 +77,15 @@ private struct WithSizeBinding: ViewModifier {
                 Color.clear.preference(key: SizePreferenceKey.self, value: geometry.size)
             })
             .onPreferenceChange(SizePreferenceKey.self) { newSize in
-                self.size = newSize
+                if let precision {
+                    let widthDelta = abs(newSize.width - size.width)
+                    let heightDelta = abs(newSize.height - size.height)
+                    if widthDelta >= precision || heightDelta >= precision {
+                        self.size = newSize
+                    }
+                } else {
+                    self.size = newSize
+                }
             }
     }
 }
