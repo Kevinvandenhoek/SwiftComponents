@@ -19,7 +19,7 @@ public protocol LoadableProtocol {
     var valueOrPlaceholder: Value { get }
 }
 
-public struct Loadable<Value>: LoadableProtocol {
+public struct Loadable<Value: Sendable>: LoadableProtocol, Sendable {
     
     public var state: LoadingState<Value> {
         didSet {
@@ -103,7 +103,7 @@ public struct Loadable<Value>: LoadableProtocol {
     }
 }
 
-public enum LoadingState<Value> {
+public enum LoadingState<Value: Sendable>: Sendable {
     
     case initial
     case loading
@@ -166,7 +166,7 @@ extension LoadingState: Equatable {
 
 extension Loadable {
     
-    public enum PlaceholderStorage {
+    public enum PlaceholderStorage: Sendable {
         /// Whenever a value is loaded, a persistent placeholder of the same value will be written to storage if possible
         case `default`
         /// Whenever a value is loaded, a persistent placeholder of the same value will be written to storage if possible, but with a custom key
