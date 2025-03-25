@@ -19,7 +19,7 @@ public protocol LoadableProtocol {
     var valueOrPlaceholder: Value { get }
 }
 
-public struct Loadable<Value>: LoadableProtocol {
+public struct Loadable<Value: Sendable>: LoadableProtocol, Sendable {
     
     public var state: LoadingState<Value> {
         didSet {
@@ -82,7 +82,7 @@ public struct Loadable<Value>: LoadableProtocol {
     }
 }
 
-public enum LoadingState<Value> {
+public enum LoadingState<Value: Sendable>: Sendable {
     case initial
     case loading
     case error(Error)
