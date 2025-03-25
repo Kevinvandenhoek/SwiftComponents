@@ -35,7 +35,7 @@ public extension ObservableObject {
     func loadAsync<Value>(
         into keyPath: ReferenceWritableKeyPath<Self, Loadable<Value>>,
         ignoreIfLoaded: Bool = false,
-        loader: () async throws -> Value
+        loader: @Sendable () async throws -> Value
     ) async throws -> Value {
         if ignoreIfLoaded, case .loaded(let value) = self[keyPath: keyPath].state {
             return value
@@ -146,7 +146,7 @@ public extension ObservableObject {
         ignoreIfLoaded: Bool = false,
         file: String = #file,
         line: Int = #line,
-        loader: () async throws -> Value
+        loader: @Sendable () async throws -> Value
     ) async throws -> Value {
         if ignoreIfLoaded, case .loaded(let value) = self[keyPath: keyPath].value.state {
             return value
