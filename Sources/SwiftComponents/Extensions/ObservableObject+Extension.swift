@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-public extension ObservableObject {
+@MainActor public extension ObservableObject {
     
     /// Load data and update the property specified by a key path.
     ///
@@ -19,9 +19,9 @@ public extension ObservableObject {
     func load<Value>(
         into keyPath: ReferenceWritableKeyPath<Self, Loadable<Value>>,
         ignoreIfLoaded: Bool = false,
-        loader: @Sendable @escaping () async throws -> Value
+        loader: @MainActor @Sendable @escaping () async throws -> Value
     ) {
-        Task {
+        Task { @MainActor in
             try? await loadAsync(into: keyPath, ignoreIfLoaded: ignoreIfLoaded, loader: loader)
         }
     }
@@ -35,7 +35,7 @@ public extension ObservableObject {
     func loadAsync<Value>(
         into keyPath: ReferenceWritableKeyPath<Self, Loadable<Value>>,
         ignoreIfLoaded: Bool = false,
-        loader: @Sendable () async throws -> Value
+        loader: @MainActor @Sendable () async throws -> Value
     ) async throws -> Value {
         if ignoreIfLoaded, case .loaded(let value) = self[keyPath: keyPath].state {
             return value
@@ -63,9 +63,9 @@ public extension ObservableObject {
         scheduler: some Scheduler,
         file: String = #file,
         line: Int = #line,
-        loader: @Sendable @escaping () async throws -> Value
+        loader: @MainActor @Sendable @escaping () async throws -> Value
     ) {
-        Task {
+        Task { @MainActor in
             try? await loadAsync(
                 into: keyPath,
                 ignoreIfLoaded: ignoreIfLoaded,
@@ -89,7 +89,7 @@ public extension ObservableObject {
         scheduler: some Scheduler,
         file: String = #file,
         line: Int = #line,
-        loader: @Sendable () async throws -> Value
+        loader: @MainActor @Sendable () async throws -> Value
     ) async throws -> Value {
         if ignoreIfLoaded, case .loaded(let value) = self[keyPath: keyPath].value.state {
             return value
@@ -122,9 +122,9 @@ public extension ObservableObject {
         ignoreIfLoaded: Bool = false,
         file: String = #file,
         line: Int = #line,
-        loader: @Sendable @escaping () async throws -> Value
+        loader: @MainActor @Sendable @escaping () async throws -> Value
     ) {
-        Task {
+        Task { @MainActor in
             try? await loadAsync(
                 into: keyPath,
                 ignoreIfLoaded: ignoreIfLoaded,
@@ -146,7 +146,7 @@ public extension ObservableObject {
         ignoreIfLoaded: Bool = false,
         file: String = #file,
         line: Int = #line,
-        loader: @Sendable () async throws -> Value
+        loader: @MainActor @Sendable () async throws -> Value
     ) async throws -> Value {
         if ignoreIfLoaded, case .loaded(let value) = self[keyPath: keyPath].value.state {
             return value
